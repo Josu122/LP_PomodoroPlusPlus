@@ -151,12 +151,12 @@
 
 <script>
   /* ====== CONFIGURA ESTO ====== */
-  const REPO = "USUARIO/REPO-DE-LA-APP";   // ej. "miusuario/pomodoro-plus"
+  const REPO = "CarlosConLetraC/pomodoro-plus-plus";
 
   /* Cada plataforma: etiqueta y terminaciones de archivo que se buscarán en la release */
   const PLATAFORMAS = {
-    windows: { nombre: "Windows",            ext: [".exe", ".msi"] },
-    linux:   { nombre: "Linux (AppImage)",   ext: [".appimage"] },
+    windows: { nombre: "Windows",            ext: [".exe", ".msi", ".zip"] },
+    linux:   { nombre: "Linux (portable)",   ext: [".tar.gz", ".appimage"] },
     debian:  { nombre: "Ubuntu / Debian",    ext: [".deb"] },
     arch:    { nombre: "Arch / CachyOS",     ext: [".pkg.tar.zst"] },
     android: { nombre: "Android",            ext: [".apk"] },
