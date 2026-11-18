@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pomodoro++</title>
+<style>
+  /* Regla 60-30-10: blanco 60%, gris 30%, naranja 10% */
+  :root {
+    --blanco: #ffffff;
+    --gris: #494a4b;
+    --naranja: #ed9f00;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--blanco);
+    color: var(--gris);
+    line-height: 1.6;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Navegación */
+  nav { padding: 1.25rem 0; }
+  nav .wrap { display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-weight: 800; font-size: 1.25rem; text-decoration: none; }
+  .logo span { color: var(--naranja); }
+  nav a.link { text-decoration: none; margin-left: 1.5rem; font-weight: 500; }
+  nav a.link:hover { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: 6px; }
+
+  /* Hero */
+  .hero { padding: 4rem 0 5rem; }
+  .hero .wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center; }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.1; margin-bottom: 1rem; }
+  .hero p.sub { font-size: 1.15rem; margin-bottom: 2rem; max-width: 34ch; }
+
+  .btn {
+    display: inline-block; padding: .9rem 1.6rem; border-radius: 10px;
+    font-weight: 700; text-decoration: none; border: 2px solid transparent;
+    transition: transform .15s ease, background .15s ease;
+    cursor: pointer; font-size: 1rem;
+  }
+  .btn-main { background: var(--naranja); color: var(--gris); }
+  .btn-main:hover { transform: translateY(-2px); }
+  .btn-sec { background: transparent; color: var(--gris); border-color: var(--gris); margin-left: .5rem; }
+  .btn-sec:hover { background: var(--gris); color: var(--blanco); }
+  .btn:focus-visible { outline: 3px solid var(--naranja); outline-offset: 3px; }
+  .version { display: block; margin-top: .9rem; font-size: .9rem; opacity: .8; }
+
+  /* Temporizador decorativo (único elemento animado grande) */
+  .timer { width: 100%; max-width: 320px; margin: 0 auto; display: block; }
+  .timer .pista { stroke: var(--gris); opacity: .15; }
+  .timer .progreso {
+    stroke: var(--naranja); stroke-linecap: round;
+    stroke-dasharray: 628; stroke-dashoffset: 628;
+    transform: rotate(-90deg); transform-origin: 50% 50%;
+    animation: llenar 6s ease-in-out infinite alternate;
+  }
+  @keyframes llenar { to { stroke-dashoffset: 157; } }
+  .timer text { fill: var(--gris); font-weight: 800; font-size: 44px; }
+
+  /* Características (banda gris) */
+  .features { background: var(--gris); color: var(--blanco); padding: 4rem 0; }
+  .features h2 { margin-bottom: 2rem; font-size: 1.8rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
+  .features h3 { color: var(--naranja); margin-bottom: .4rem; }
+
+  /* Descargas */
+  .downloads { padding: 4rem 0; }
+  .downloads h2 { font-size: 1.8rem; margin-bottom: .5rem; }
+  .lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+  .lista a, .lista span.soon {
+    display: block; padding: 1rem 1.2rem; border: 2px solid var(--gris);
+    border-radius: 10px; text-decoration: none; font-weight: 600;
+    transition: background .15s ease, color .15s ease;
+  }
+  .lista a:hover { background: var(--gris); color: var(--blanco); }
+  .lista small { display: block; font-weight: 400; opacity: .75; }
+  .lista span.soon { opacity: .5; border-style: dashed; }
+
+  footer { background: var(--gris); color: var(--blanco); padding: 1.5rem 0; font-size: .9rem; text-align: center; }
+  footer a { color: var(--naranja); }
+
+  @media (max-width: 700px) {
+    .hero .wrap { grid-template-columns: 1fr; text-align: center; }
+    .hero p.sub { margin-left: auto; margin-right: auto; }
+    .btn-sec { margin: .75rem 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .timer .progreso { animation: none; stroke-dashoffset: 157; }
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#">Pomodoro<span>++</span></a>
+    <div>
+      <a class="link" href="#funciones">Funciones</a>
+      <a class="link" href="#descargas">Descargas</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div>
+      <h1>Enfócate. Descansa. Repite.</h1>
+      <p class="sub">Pomodoro++ es un temporizador de productividad simple, rápido y disponible en tus dispositivos.</p>
+      <a id="btn-principal" class="btn btn-main" href="#descargas">Descargar</a>
+      <a class="btn btn-sec" href="#descargas">Otras plataformas</a>
+      <span id="version" class="version"></span>
+    </div>
+    <svg class="timer" viewBox="0 0 240 240" aria-hidden="true">
+      <circle class="pista" cx="120" cy="120" r="100" fill="none" stroke-width="16"/>
+      <circle class="progreso" cx="120" cy="120" r="100" fill="none" stroke-width="16"/>
+      <text x="120" y="135" text-anchor="middle">25:00</text>
+    </svg>
+  </div>
+</header>
+
+<section class="features" id="funciones">
+  <div class="wrap">
+    <h2>Lo que hace Pomodoro++</h2>
+    <div class="grid">
+      <div><h3>Ciclos de enfoque</h3><p>Sesiones de trabajo y descansos que puedes ajustar a tu ritmo.</p></div>
+      <div><h3>Multiplataforma</h3><p>Linux, Windows y Android, con más sistemas en camino.</p></div>
+      <div><h3>Código abierto</h3><p>Descarga la última versión directamente desde GitHub.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="downloads" id="descargas">
+  <div class="wrap">
+    <h2>Descarga Pomodoro++</h2>
+    <p>Elige la versión para tu sistema.</p>
+    <div class="lista" id="lista"></div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    © 2026 Pomodoro++ ·
+    <a id="repo-link" href="#">Ver en GitHub</a>
+  </div>
+</footer>
+
+<script>
+  /* ====== CONFIGURA ESTO ====== */
+  const REPO = "USUARIO/REPO-DE-LA-APP";   // ej. "miusuario/pomodoro-plus"
+
+  /* Cada plataforma: etiqueta y terminaciones de archivo que se buscarán en la release */
+  const PLATAFORMAS = {
+    windows: { nombre: "Windows",            ext: [".exe", ".msi"] },
+    linux:   { nombre: "Linux (AppImage)",   ext: [".appimage"] },
+    debian:  { nombre: "Ubuntu / Debian",    ext: [".deb"] },
+    arch:    { nombre: "Arch / CachyOS",     ext: [".pkg.tar.zst"] },
+    android: { nombre: "Android",            ext: [".apk"] },
+    macos:   { nombre: "macOS",              ext: [".dmg"] }
+  };
+  const PROXIMAMENTE = ["iOS"];
+  /* ============================ */
+
+  const URL_RELEASES = `https://github.com/${REPO}/releases/latest`;
+  document.getElementById("repo-link").href = `https://github.com/${REPO}`;
+
+  function detectarOS() {
+    const ua = navigator.userAgent;
+    const plat = navigator.userAgentData?.platform || navigator.platform || "";
+    if (/android/i.test(ua)) return "android";
+    if (/iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(plat) && navigator.maxTouchPoints > 1)) return "ios";
+    if (/Win/i.test(plat)) return "windows";
+    if (/Mac/i.test(plat)) return "macos";
+    if (/Linux|X11/i.test(plat + ua)) return "linux";
+    return "desconocido";
+  }
+
+  function buscarAsset(assets, exts) {
+    return assets.find(a => exts.some(e => a.name.toLowerCase().endsWith(e)));
+  }
+
+  function dibujarLista(assets) {
+    const cont = document.getElementById("lista");
+    cont.innerHTML = "";
+    for (const [id, p] of Object.entries(PLATAFORMAS)) {
+      const asset = buscarAsset(assets, p.ext);
+      if (asset) {
+        const a = document.createElement("a");
+        a.href = asset.browser_download_url;
+        a.innerHTML = `${p.nombre}<small>${asset.name}</small>`;
+        cont.appendChild(a);
+      }
+    }
+    PROXIMAMENTE.forEach(n => {
+      const s = document.createElement("span");
+      s.className = "soon";
+      s.innerHTML = `${n}<small>Próximamente</small>`;
+      cont.appendChild(s);
+    });
+    if (!cont.querySelector("a")) {
+      cont.innerHTML = `<a href="${URL_RELEASES}">Ver todas las descargas en GitHub</a>`;
+    }
+  }
+
+  function botonPrincipal(os, assets) {
+    const btn = document.getElementById("btn-principal");
+    let clave = os;
+    if (os === "linux") clave = "linux"; // en Linux no se puede saber la distro: AppImage por defecto
+    const p = PLATAFORMAS[clave];
+    if (p) {
+      const asset = buscarAsset(assets, p.ext);
+      btn.textContent = `Descargar para ${p.nombre.split(" (")[0]}`;
+      btn.href = asset ? asset.browser_download_url : URL_RELEASES;
+    } else if (os === "ios") {
+      btn.textContent = "iOS próximamente";
+      btn.href = "#descargas";
+    } else {
+      btn.textContent = "Ver descargas";
+      btn.href = "#descargas";
+    }
+  }
+
+  async function iniciar() {
+    const os = detectarOS();
+    botonPrincipal(os, []);          // estado inicial mientras carga
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+      if (!r.ok) throw new Error(r.status);
+      const data = await r.json();
+      document.getElementById("version").textContent = `Última versión: ${data.tag_name}`;
+      botonPrincipal(os, data.assets);
+      dibujarLista(data.assets);
+    } catch (e) {
+      // Fallback: enlace general a la última release
+      document.getElementById("btn-principal").href = URL_RELEASES;
+      document.getElementById("lista").innerHTML =
+        `<a href="${URL_RELEASES}">Ver todas las descargas en GitHub</a>`;
+    }
+  }
+  iniciar();
+</script>
+</body>
+</html>
