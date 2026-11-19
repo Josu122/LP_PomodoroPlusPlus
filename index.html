@@ -3,245 +3,494 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pomodoro++</title>
+<title>Pomodoro++ · temporizador pomodoro con modo adaptativo</title>
+<meta name="description" content="Temporizador Pomodoro con modo adaptativo. Descárgalo para Windows, Linux y Android.">
+<link rel="icon" href="favicon.png" type="image/png">
+<script>
+  document.documentElement.classList.add("js");
+  try {
+    var t = localStorage.getItem("tema");
+    if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    document.documentElement.dataset.theme = t;
+  } catch (e) { document.documentElement.dataset.theme = "light"; }
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* Regla 60-30-10: blanco 60%, gris 30%, naranja 10% */
-  :root {
-    --blanco: #ffffff;
-    --gris: #494a4b;
-    --naranja: #ed9f00;
-  }
-  * { box-sizing: border-box; margin: 0; }
-  html { scroll-behavior: smooth; }
-  body {
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    background: var(--blanco);
-    color: var(--gris);
-    line-height: 1.6;
-  }
-  a { color: inherit; }
-  .wrap { max-width: 960px; margin: 0 auto; padding: 0 1.5rem; }
+  /* Tipografía: cambia solo esta línea */
+  :root { --fuente: "Open Sans", system-ui, "Segoe UI", sans-serif; }
 
-  /* Navegación */
-  nav { padding: 1.25rem 0; }
-  nav .wrap { display: flex; justify-content: space-between; align-items: center; }
-  .logo { font-weight: 800; font-size: 1.25rem; text-decoration: none; }
-  .logo span { color: var(--naranja); }
-  nav a.link { text-decoration: none; margin-left: 1.5rem; font-weight: 500; }
-  nav a.link:hover { text-decoration: underline; text-decoration-color: var(--naranja); text-underline-offset: 6px; }
+  /* Paleta: blanco ~60%, gris ~30%, naranja ~10% */
+  :root {
+    --bg: #ffffff; --texto: #1c1c1d; --suave: #5a5b5c;
+    --gris: #494a4b; --naranja: #ed9f00; --naranja-fuerte: #c27a00;
+    --win: #ffffff; --borde: #d3d8de; --labio: #c0cedc;
+    --fila: color-mix(in srgb, #ed9f00 20%, #ffffff);
+    --fila-hover: color-mix(in srgb, #ed9f00 32%, #ffffff);
+    --agua1: #a0d2ff; --agua2: #c7e4ff; --agua-texto: #1f3550;
+  }
+  :root[data-theme="dark"] {
+    --bg: #1c1c1c; --texto: #f2f2f2; --suave: #b4b5b6; --naranja-fuerte: #f2b23a;
+    --win: #161617; --borde: #2c2d2f; --labio: #0f1b27;
+    --fila: color-mix(in srgb, #ed9f00 16%, #1d1d1e);
+    --fila-hover: color-mix(in srgb, #ed9f00 28%, #1d1d1e);
+    --agua1: #356586; --agua2: #0c3256; --agua-texto: #eaf4ff;
+  }
+
+  * { box-sizing: border-box; margin: 0; }
+  html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }
+  body { font-family: var(--fuente); background: var(--bg); color: var(--texto); line-height: 1.6; transition: background .3s ease, color .3s ease; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--naranja); outline-offset: 3px; border-radius: 6px; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; }
+  .ic { width: 1.5rem; height: 1.5rem; fill: currentColor; }
+
+  /* Cabecera */
+  header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--borde); }
+  header.top .wrap { display: flex; align-items: center; gap: 1.5rem; height: 3.6rem; }
+  .marca { display: flex; align-items: center; gap: .6rem; text-decoration: none; font-size: 1.35rem; line-height: 1; }
+  .marca img { width: 2rem; height: 2rem; }
+  .marca sup, .h-brand sup { color: var(--naranja); font-weight: 800; font-size: .55em; vertical-align: top; position: relative; top: -.15em; }
+  header nav { display: flex; gap: 1.4rem; margin-left: auto; }
+  header nav a { text-decoration: none; font-weight: 600; font-size: .95rem; }
+  header nav a:hover { color: var(--naranja-fuerte); }
+  .icon-btn { background: none; border: 0; color: inherit; cursor: pointer; padding: .45rem; border-radius: 8px; display: grid; place-items: center; }
+  .icon-btn:hover { background: color-mix(in srgb, currentColor 12%, transparent); color: var(--naranja-fuerte); }
+  #btn-theme .sol { display: none; }
+  :root[data-theme="dark"] #btn-theme .luna { display: none; }
+  :root[data-theme="dark"] #btn-theme .sol { display: block; }
+  .btn { display: inline-block; padding: .55rem 1.1rem; border-radius: 8px; font-weight: 700; font-size: .92rem; text-decoration: none; background: var(--naranja); color: #1c1c1d; box-shadow: 0 3px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 color-mix(in srgb, var(--naranja) 60%, #000); }
+  .btn.sec { background: transparent; color: var(--texto); box-shadow: inset 0 0 0 2px var(--gris); }
+  :root[data-theme="dark"] .btn.sec { box-shadow: inset 0 0 0 2px var(--suave); }
 
   /* Hero */
-  .hero { padding: 4rem 0 5rem; }
-  .hero .wrap { display: grid; grid-template-columns: 1.2fr 1fr; gap: 3rem; align-items: center; }
-  h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); line-height: 1.1; margin-bottom: 1rem; }
-  .hero p.sub { font-size: 1.15rem; margin-bottom: 2rem; max-width: 34ch; }
+  .hero { text-align: center; padding: 3.5rem 0 0; }
+  .h-brand { font-size: clamp(2.6rem, 7vw, 4rem); font-weight: 400; line-height: 1.1; }
+  .lema { color: var(--suave); font-size: 1.15rem; margin: .6rem auto 0; max-width: 40ch; }
+  .release { margin: 1.8rem 0 .9rem; font-size: .9rem; color: var(--suave); }
+  .release b { color: var(--naranja-fuerte); }
+  .os-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 760px; margin: 0 auto; }
+  .os { display: block; text-decoration: none; padding: 1.1rem 1rem; border-radius: 10px; background: var(--naranja); color: #1c1c1d; border: 0; font-family: inherit; cursor: pointer; box-shadow: 0 4px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; position: relative; }
+  .os:hover { transform: translateY(-2px); box-shadow: 0 6px 0 color-mix(in srgb, var(--naranja) 60%, #000); }
+  .os b { display: block; font-size: 1.25rem; font-weight: 800; }
+  .os small { display: block; font-size: .8rem; opacity: .85; }
+  .os.tuyo::after { content: "tu sistema"; position: absolute; top: -.7rem; right: .7rem; background: var(--gris); color: #fff; font-size: .7rem; font-weight: 700; padding: .1rem .55rem; border-radius: 99px; }
+  .os[aria-disabled="true"] { background: var(--fila); color: var(--suave); box-shadow: none; cursor: default; transform: none; }
+  .linux-panel { max-width: 760px; margin: 1rem auto 0; display: grid; gap: .5rem; text-align: left; }
+  .linux-panel[hidden] { display: none; }
+  .fila { display: flex; justify-content: space-between; align-items: center; gap: 1rem; padding: .65rem .9rem; border-radius: 8px; background: var(--fila); text-decoration: none; font-weight: 600; font-size: .95rem; }
+  .fila:hover { background: var(--fila-hover); }
+  .fila small { font-weight: 400; color: var(--suave); font-size: .78rem; word-break: break-all; }
+  .nota { margin-top: 1rem; font-size: .88rem; color: var(--suave); }
+  .nota b { color: var(--texto); }
+  .hero-img { margin: 3rem auto 0; max-width: 1040px; }
+  .hero-img img { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--borde); box-shadow: 0 6px 0 var(--labio); }
 
-  .btn {
-    display: inline-block; padding: .9rem 1.6rem; border-radius: 10px;
-    font-weight: 700; text-decoration: none; border: 2px solid transparent;
-    transition: transform .15s ease, background .15s ease;
-    cursor: pointer; font-size: 1rem;
+  /* Secciones */
+  section.bloque { padding: 5rem 0 0; }
+  .eyebrow { color: var(--naranja-fuerte); font-weight: 700; font-size: .9rem; }
+  .bloque > .wrap > h2 { font-size: clamp(1.7rem, 4vw, 2.3rem); font-weight: 800; line-height: 1.2; margin-bottom: 3rem; text-align: center; }
+  .fila-f { display: grid; grid-template-columns: 1.1fr 1fr; gap: 3rem; align-items: center; margin-bottom: 4rem; }
+  .fila-f.inv .shot { order: 2; }
+  .fila-f h3 { font-size: 1.6rem; font-weight: 800; line-height: 1.2; margin: .3rem 0 .7rem; }
+  .fila-f p { color: var(--suave); font-size: 1.05rem; }
+
+  /* Marcos de captura */
+  .shot { margin: 0; border-radius: 10px; overflow: hidden; border: 1px solid var(--borde); background: var(--win); box-shadow: 0 4px 0 var(--labio); }
+  .shot img { display: block; width: 100%; height: auto; }
+  .shot.chico { max-width: 380px; justify-self: center; }
+  .shot-bar { background: var(--gris); color: #fff; padding: .5rem .9rem; font-weight: 700; font-size: .85rem; }
+  .shot-body { min-height: 190px; display: grid; place-content: center; text-align: center; gap: .3rem; padding: 1.5rem; margin: .8rem; border: 2px dashed var(--borde); border-radius: 8px; color: var(--suave); font-weight: 600; }
+  .shot-body small { font-weight: 400; font-size: .8rem; }
+  .teclas { padding: 1.2rem; display: grid; gap: .6rem; }
+  .teclas div { display: flex; align-items: center; gap: .9rem; background: var(--fila); border-radius: 8px; padding: .6rem .9rem; font-weight: 600; }
+  kbd { font-family: ui-monospace, "Cascadia Code", monospace; font-size: .85rem; min-width: 3.4rem; text-align: center; padding: .15rem .5rem; border-radius: 6px; background: var(--win); border: 1px solid var(--borde); box-shadow: 0 2px 0 var(--labio); }
+
+
+  /* Imágenes por tema */
+  img.solo-oscuro { display: none; }
+  :root[data-theme="dark"] img.solo-claro { display: none; }
+  :root[data-theme="dark"] img.solo-oscuro { display: block; }
+  .hero-img { max-width: 925px; }
+  .nota[hidden] { display: none; }
+
+  /* Animaciones de funciones */
+  @property --c { syntax: "<color>"; inherits: true; initial-value: #ed9f00; }
+  .anim { min-height: 220px; padding: 1.2rem; display: grid; place-items: center; position: relative; overflow: hidden; }
+  .ad { width: 100%; max-width: 320px; display: grid; gap: .75rem; }
+  .ad-fila { display: grid; grid-template-columns: 4.6rem 1fr; align-items: center; gap: .7rem; font-size: .8rem; font-weight: 600; color: var(--suave); }
+  .ad-fila i { display: block; height: 1.1rem; border-radius: 6px; background: var(--naranja); width: 60%; animation: adapta 7s ease-in-out infinite; }
+  .ad-fila.d i { background: color-mix(in srgb, var(--naranja) 35%, var(--win)); }
+  .ad-fila:nth-child(2) i { animation-delay: -1.2s; } .ad-fila:nth-child(3) i { animation-delay: -2.4s; }
+  @keyframes adapta { 0%, 100% { width: 55%; } 30% { width: 92%; } 60% { width: 38%; } }
+  .ad-tag { justify-self: center; margin-top: .3rem; font-size: .75rem; font-weight: 700; padding: .2rem .8rem; border-radius: 99px; background: var(--gris); color: #fff; display: flex; align-items: center; gap: .4rem; }
+  .ad-tag::before { content: ""; width: .5rem; height: .5rem; border-radius: 50%; background: var(--naranja); animation: pulso 1.6s ease-in-out infinite; }
+  @keyframes pulso { 50% { transform: scale(1.5); opacity: .6; } }
+
+  .pe { gap: 1rem; align-content: center; animation: acc 12s linear infinite; }
+  @keyframes acc { 0%, 20% { --c: #ed9f00; } 27%, 45% { --c: #3fae6a; } 52%, 70% { --c: #4fb3e8; } 77%, 95% { --c: #8a63d2; } 100% { --c: #ed9f00; } }
+  .mini { width: 210px; border-radius: 10px; border: 1px solid var(--borde); overflow: hidden; text-align: center; box-shadow: 0 3px 0 var(--labio); animation: tema 12s ease-in-out infinite; }
+  @keyframes tema { 0%, 40% { background: #fff; color: #1c1c1d; } 50%, 90% { background: #0b1d33; color: #f2f2f2; } 100% { background: #fff; color: #1c1c1d; } }
+  .mini-bar { background: var(--gris); color: #fff; font-size: .7rem; font-weight: 700; padding: .3rem .6rem; text-align: left; }
+  .mini-body { padding: .7rem 0 .8rem; }
+  .mini p { margin: 0; }
+  .mini-fase { font-size: .7rem; display: flex; justify-content: center; align-items: center; gap: .35rem; }
+  .mini-fase i { width: .5rem; height: .5rem; border-radius: 50%; background: var(--c); }
+  .mini-reloj { font-size: 2.4rem; font-weight: 800; line-height: 1.15; color: var(--c); }
+  .mini-pts { display: flex; justify-content: center; gap: .3rem; margin-top: .2rem; }
+  .mini-pts i { width: .45rem; height: .45rem; border-radius: 50%; border: 1.5px solid currentColor; opacity: .6; }
+  .mini-pts i:first-child { background: var(--c); border-color: var(--c); opacity: 1; }
+  .swatches { display: flex; gap: .7rem; }
+  .swatches i { width: 1.5rem; height: 1.5rem; border-radius: 50%; animation: aro 12s linear infinite; }
+  .swatches i:nth-child(1) { background: #ed9f00; } .swatches i:nth-child(2) { background: #3fae6a; animation-delay: 3s; }
+  .swatches i:nth-child(3) { background: #4fb3e8; animation-delay: 6s; } .swatches i:nth-child(4) { background: #8a63d2; animation-delay: 9s; }
+  @keyframes aro { 0%, 23% { box-shadow: 0 0 0 3px var(--win), 0 0 0 5px var(--texto); } 27%, 100% { box-shadow: none; } }
+
+  .es { width: 100%; max-width: 320px; }
+  .es-barras { height: 140px; display: flex; align-items: flex-end; gap: .6rem; border-bottom: 2px solid var(--borde); }
+  .es-barras i { flex: 1; border-radius: 6px 6px 0 0; background: var(--naranja); height: 0; animation: crece 6s ease-in-out infinite; }
+  .es-barras i:nth-child(1) { --h: 45%; } .es-barras i:nth-child(2) { --h: 70%; animation-delay: .15s; } .es-barras i:nth-child(3) { --h: 55%; animation-delay: .3s; }
+  .es-barras i:nth-child(4) { --h: 90%; animation-delay: .45s; } .es-barras i:nth-child(5) { --h: 65%; animation-delay: .6s; }
+  .es-barras i:nth-child(6) { --h: 35%; animation-delay: .75s; } .es-barras i:nth-child(7) { --h: 50%; animation-delay: .9s; }
+  @keyframes crece { 0% { height: 0; } 18%, 80% { height: var(--h); } 95%, 100% { height: 0; } }
+  .es-dias { display: flex; gap: .6rem; margin-top: .4rem; font-size: .72rem; color: var(--suave); font-weight: 600; }
+  .es-dias span { flex: 1; text-align: center; }
+
+  .campana { position: relative; width: 84px; height: 84px; display: grid; place-items: center; color: var(--naranja-fuerte); margin-bottom: 1.5rem; }
+  .campana svg { width: 56px; height: 56px; fill: currentColor; transform-origin: 50% 12%; animation: suena 4s ease-in-out infinite; }
+  @keyframes suena { 0%, 45%, 100% { transform: rotate(0); } 5% { transform: rotate(16deg); } 10% { transform: rotate(-14deg); } 15% { transform: rotate(12deg); } 20% { transform: rotate(-10deg); } 25% { transform: rotate(7deg); } 30% { transform: rotate(-4deg); } 35% { transform: rotate(2deg); } }
+  .campana b { position: absolute; inset: 0; border-radius: 50%; border: 2px solid var(--naranja); opacity: 0; animation: onda 4s ease-out infinite; }
+  .campana b + b { animation-delay: .4s; }
+  @keyframes onda { 0% { transform: scale(.7); opacity: .8; } 35% { transform: scale(1.5); opacity: 0; } 100% { opacity: 0; } }
+  .aviso { position: absolute; left: 50%; bottom: .9rem; background: var(--gris); color: #fff; font-weight: 700; font-size: .8rem; padding: .5rem .9rem; border-radius: 8px; white-space: nowrap; transform: translate(-50%, 160%); animation: toast 4s ease-in-out infinite; }
+  @keyframes toast { 0%, 8% { transform: translate(-50%, 160%); } 18%, 70% { transform: translate(-50%, 0); } 82%, 100% { transform: translate(-50%, 160%); } }
+
+  .vf { width: 100%; max-width: 330px; height: 175px; position: relative; border: 1px solid var(--borde); border-radius: 8px; background: var(--win); overflow: hidden; }
+  .vf-bar { height: 1.3rem; background: var(--gris); }
+  .vf-lineas { padding: .8rem; display: grid; gap: .55rem; }
+  .vf-lineas i { display: block; height: .5rem; border-radius: 4px; background: var(--borde); }
+  .vf-lineas i:nth-child(1) { width: 55%; } .vf-lineas i:nth-child(2) { width: 85%; } .vf-lineas i:nth-child(3) { width: 70%; } .vf-lineas i:nth-child(4) { width: 90%; } .vf-lineas i:nth-child(5) { width: 40%; }
+  .vf-mini { position: absolute; right: .8rem; top: 2.4rem; width: 100px; padding: .35rem 0 .45rem; text-align: center; font-weight: 800; font-size: 1.3rem; line-height: 1.2; color: var(--naranja-fuerte); background: var(--win); border: 1px solid var(--borde); border-radius: 8px; box-shadow: 0 6px 0 var(--labio), 0 12px 18px rgba(0,0,0,.16); animation: flota 4s ease-in-out infinite; }
+  .vf-mini small { display: block; font-size: .62rem; font-weight: 600; color: var(--suave); }
+  @keyframes flota { 50% { transform: translateY(-9px); } }
+
+  .teclas div, .teclas kbd { animation: tecla 8s ease-in-out infinite; }
+  .teclas kbd { animation-name: pulsa; }
+  .teclas div:nth-child(2), .teclas div:nth-child(2) kbd { animation-delay: 2s; }
+  .teclas div:nth-child(3), .teclas div:nth-child(3) kbd { animation-delay: 4s; }
+  .teclas div:nth-child(4), .teclas div:nth-child(4) kbd { animation-delay: 6s; }
+  @keyframes tecla { 0%, 22% { background: var(--fila-hover); } 26%, 100% { background: var(--fila); } }
+  @keyframes pulsa { 0%, 22% { transform: translateY(2px); box-shadow: 0 0 0 var(--labio); background: var(--naranja); color: #1c1c1d; } 26%, 100% { transform: none; box-shadow: 0 2px 0 var(--labio); background: var(--win); color: inherit; } }
+
+  /* Banda gris (privacidad) */
+  .banda { background: var(--gris); color: #fff; text-align: center; padding: 3.5rem 0; margin-top: 2rem; }
+  .banda h2 { font-size: clamp(1.5rem, 3.5vw, 2rem); font-weight: 800; margin: .3rem 0 .5rem; }
+  .banda .eyebrow { color: var(--naranja); }
+  .banda p { max-width: 52ch; margin: 0 auto; opacity: .9; }
+
+  /* Comunidad */
+  .comunidad { text-align: center; }
+  .comunidad p { max-width: 58ch; margin: 0 auto 1.5rem; color: var(--suave); font-size: 1.05rem; }
+  .comunidad .acciones { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+  .comunidad h2 { margin-bottom: 1rem !important; }
+
+  /* Footer con agua */
+  footer.agua { position: relative; margin-top: 7rem; background: linear-gradient(to bottom, var(--agua1) 30%, var(--agua2)); color: var(--agua-texto); }
+  .olas { position: absolute; left: 0; right: 0; bottom: 100%; height: 70px; overflow: hidden; line-height: 0; }
+  .olas svg { width: 200%; height: 100%; display: block; animation: ola 14s linear infinite; }
+  .olas svg + svg { position: absolute; left: 0; top: 0; animation-duration: 22s; animation-direction: reverse; opacity: .55; }
+  .olas path { fill: var(--agua1); }
+  @keyframes ola { to { transform: translateX(-50%); } }
+  .cols { display: flex; justify-content: center; gap: 4rem; text-align: center; padding-top: 1.8rem; padding-bottom: 3rem; font-size: .92rem; }
+  .cols h4 { font-size: .85rem; font-weight: 800; margin-bottom: .5rem; }
+  .cols a { display: block; text-decoration: none; padding: .15rem 0; }
+  .cols a:hover { text-decoration: underline; }
+
+  /* Aparición al hacer scroll */
+  .js .rev { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .js .rev.in { opacity: 1; transform: none; }
+
+  @media (max-width: 800px) {
+    .os-grid { grid-template-columns: 1fr; }
+    .fila-f { grid-template-columns: 1fr; gap: 1.2rem; margin-bottom: 3rem; }
+    .fila-f.inv .shot { order: 0; }
+    header nav { gap: .9rem; margin-left: auto; } header nav a { font-size: .85rem; } .marca span { display: none; }
   }
-  .btn-main { background: var(--naranja); color: var(--gris); }
-  .btn-main:hover { transform: translateY(-2px); }
-  .btn-sec { background: transparent; color: var(--gris); border-color: var(--gris); margin-left: .5rem; }
-  .btn-sec:hover { background: var(--gris); color: var(--blanco); }
-  .btn:focus-visible { outline: 3px solid var(--naranja); outline-offset: 3px; }
-  .version { display: block; margin-top: .9rem; font-size: .9rem; opacity: .8; }
-
-  /* Temporizador decorativo (único elemento animado grande) */
-  .timer { width: 100%; max-width: 320px; margin: 0 auto; display: block; }
-  .timer .pista { stroke: var(--gris); opacity: .15; }
-  .timer .progreso {
-    stroke: var(--naranja); stroke-linecap: round;
-    stroke-dasharray: 628; stroke-dashoffset: 628;
-    transform: rotate(-90deg); transform-origin: 50% 50%;
-    animation: llenar 6s ease-in-out infinite alternate;
-  }
-  @keyframes llenar { to { stroke-dashoffset: 157; } }
-  .timer text { fill: var(--gris); font-weight: 800; font-size: 44px; }
-
-  /* Características (banda gris) */
-  .features { background: var(--gris); color: var(--blanco); padding: 4rem 0; }
-  .features h2 { margin-bottom: 2rem; font-size: 1.8rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; }
-  .features h3 { color: var(--naranja); margin-bottom: .4rem; }
-
-  /* Descargas */
-  .downloads { padding: 4rem 0; }
-  .downloads h2 { font-size: 1.8rem; margin-bottom: .5rem; }
-  .lista { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
-  .lista a, .lista span.soon {
-    display: block; padding: 1rem 1.2rem; border: 2px solid var(--gris);
-    border-radius: 10px; text-decoration: none; font-weight: 600;
-    transition: background .15s ease, color .15s ease;
-  }
-  .lista a:hover { background: var(--gris); color: var(--blanco); }
-  .lista small { display: block; font-weight: 400; opacity: .75; }
-  .lista span.soon { opacity: .5; border-style: dashed; }
-
-  footer { background: var(--gris); color: var(--blanco); padding: 1.5rem 0; font-size: .9rem; text-align: center; }
-  footer a { color: var(--naranja); }
-
-  @media (max-width: 700px) {
-    .hero .wrap { grid-template-columns: 1fr; text-align: center; }
-    .hero p.sub { margin-left: auto; margin-right: auto; }
-    .btn-sec { margin: .75rem 0 0; }
-  }
+  @media (max-width: 520px) { .nav-x { display: none; } }
   @media (prefers-reduced-motion: reduce) {
-    .timer .progreso { animation: none; stroke-dashoffset: 157; }
+    .olas svg, .anim *, .pe, .mini, .teclas div, .teclas kbd { animation: none !important; }
+    .es-barras i { height: var(--h); } .aviso { transform: translate(-50%, 0); } .ad-fila i { width: 65%; }
+    .js .rev { opacity: 1; transform: none; transition: none; }
     html { scroll-behavior: auto; }
   }
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="wrap">
-    <a class="logo" href="#">Pomodoro<span>++</span></a>
-    <div>
-      <a class="link" href="#funciones">Funciones</a>
-      <a class="link" href="#descargas">Descargas</a>
-    </div>
-  </div>
-</nav>
+<svg xmlns="http://www.w3.org/2000/svg" hidden aria-hidden="true" width="0" height="0" style="position:absolute">
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12.3 22h-.1a10.31 10.31 0 0 1-7.34-3.15 10.46 10.46 0 0 1-.26-14 10.13 10.13 0 0 1 4-2.74 1 1 0 0 1 1.06.22 1 1 0 0 1 .24 1 8.4 8.4 0 0 0 1.94 8.81 8.47 8.47 0 0 0 8.83 1.94 1 1 0 0 1 1.27 1.29A10.16 10.16 0 0 1 19.6 19a10.28 10.28 0 0 1-7.3 3zM7.46 4.92a7.93 7.93 0 0 0-1.37 1.22 8.44 8.44 0 0 0 .2 11.32A8.29 8.29 0 0 0 12.22 20h.08a8.34 8.34 0 0 0 6.78-3.49A10.37 10.37 0 0 1 7.46 4.92z"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><path d="M12 6a1 1 0 0 0 1-1V3a1 1 0 0 0-2 0v2a1 1 0 0 0 1 1z"/><path d="M21 11h-2a1 1 0 0 0 0 2h2a1 1 0 0 0 0-2z"/><path d="M6 12a1 1 0 0 0-1-1H3a1 1 0 0 0 0 2h2a1 1 0 0 0 1-1z"/><path d="M6.22 5a1 1 0 0 0-1.39 1.47l1.44 1.39a1 1 0 0 0 .73.28 1 1 0 0 0 .72-.31 1 1 0 0 0 0-1.41z"/><path d="M17 8.14a1 1 0 0 0 .69-.28l1.44-1.39A1 1 0 0 0 17.78 5l-1.44 1.42a1 1 0 0 0 0 1.41 1 1 0 0 0 .66.31z"/><path d="M12 18a1 1 0 0 0-1 1v2a1 1 0 0 0 2 0v-2a1 1 0 0 0-1-1z"/><path d="M17.73 16.14a1 1 0 0 0-1.39 1.44L17.78 19a1 1 0 0 0 .69.28 1 1 0 0 0 .72-.3 1 1 0 0 0 0-1.42z"/><path d="M6.27 16.14l-1.44 1.39a1 1 0 0 0 0 1.42 1 1 0 0 0 .72.3 1 1 0 0 0 .67-.25l1.44-1.39a1 1 0 0 0-1.39-1.44z"/><path d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4zm0 6a2 2 0 1 1 2-2 2 2 0 0 1-2 2z"/></symbol>
+</svg>
 
-<header class="hero">
+<header class="top">
   <div class="wrap">
-    <div>
-      <h1>Enfócate. Descansa. Repite.</h1>
-      <p class="sub">Pomodoro++ es un temporizador de productividad simple, rápido y disponible en tus dispositivos.</p>
-      <a id="btn-principal" class="btn btn-main" href="#descargas">Descargar</a>
-      <a class="btn btn-sec" href="#descargas">Otras plataformas</a>
-      <span id="version" class="version"></span>
-    </div>
-    <svg class="timer" viewBox="0 0 240 240" aria-hidden="true">
-      <circle class="pista" cx="120" cy="120" r="100" fill="none" stroke-width="16"/>
-      <circle class="progreso" cx="120" cy="120" r="100" fill="none" stroke-width="16"/>
-      <text x="120" y="135" text-anchor="middle">25:00</text>
-    </svg>
+    <a class="marca" href="#inicio"><img src="logo.png" alt="" width="32" height="32"><span>pomodoro<sup>++</sup></span></a>
+    <nav>
+      <a class="nav-x" href="#inicio">Inicio</a>
+      <a href="#descargar">Descargar</a>
+      <a href="#funciones">Funciones</a>
+      <a class="nav-x" href="#comunidad">Código</a>
+    </nav>
+    <button id="btn-theme" class="icon-btn" type="button" title="Cambiar tema">
+      <svg class="ic luna" aria-hidden="true"><use href="#i-moon"/></svg>
+      <svg class="ic sol" aria-hidden="true"><use href="#i-sun"/></svg>
+      <span class="sr-only">Cambiar entre modo claro y oscuro</span>
+    </button>
   </div>
 </header>
 
-<section class="features" id="funciones">
-  <div class="wrap">
-    <h2>Lo que hace Pomodoro++</h2>
-    <div class="grid">
-      <div><h3>Ciclos de enfoque</h3><p>Sesiones de trabajo y descansos que puedes ajustar a tu ritmo.</p></div>
-      <div><h3>Multiplataforma</h3><p>Linux, Windows y Android, con más sistemas en camino.</p></div>
-      <div><h3>Código abierto</h3><p>Descarga la última versión directamente desde GitHub.</p></div>
+<main>
+  <!-- ===== Hero ===== -->
+  <section class="hero" id="inicio">
+    <div class="wrap">
+      <h1 class="h-brand" aria-label="Pomodoro++"><span aria-hidden="true">pomodoro<sup>++</sup></span></h1>
+      <p class="lema">Temporizador Pomodoro con modo adaptativo. Enfócate, descansa y repite.</p>
+
+      <p class="release" id="descargar">Última versión: <b id="version">…</b><span id="fecha"></span></p>
+      <div class="os-grid" id="os-grid">
+        <a class="os" id="os-windows" href="#"><b>Windows</b><small>descarga directa</small></a>
+        <button class="os" id="os-linux" type="button" aria-expanded="false" aria-controls="linux-panel"><b>Linux</b><small>Ubuntu, Debian, Arch y más</small></button>
+        <a class="os" id="os-android" aria-disabled="true"><b>Android</b><small>próximamente</small></a>
+      </div>
+      <div class="linux-panel" id="linux-panel" hidden></div>
+      <p class="nota" id="nota-os" hidden></p>
+
+      <div class="hero-img rev">
+        <img class="solo-claro" src="hero-claro.webp" alt="Pomodoro++ mostrando el temporizador y el panel de configuración" width="925" height="500">
+        <img class="solo-oscuro" src="hero-oscuro.webp" alt="Pomodoro++ en modo oscuro mostrando el temporizador y el panel de configuración" width="925" height="500">
+      </div>
     </div>
-  </div>
-</section>
+  </section>
 
-<section class="downloads" id="descargas">
-  <div class="wrap">
-    <h2>Descarga Pomodoro++</h2>
-    <p>Elige la versión para tu sistema.</p>
-    <div class="lista" id="lista"></div>
-  </div>
-</section>
+  <!-- ===== Funciones (1) ===== -->
+  <section class="bloque" id="funciones">
+    <div class="wrap">
+      <h2 class="rev">Todo lo que necesitas para enfocarte</h2>
 
-<footer>
-  <div class="wrap">
-    © 2026 Pomodoro++ ·
-    <a id="repo-link" href="#">Ver en GitHub</a>
+      <div class="fila-f rev">
+        <figure class="shot chico"><img class="solo-claro" src="temporizador-claro.webp" alt="Ventana del temporizador de Pomodoro++" width="376" height="308" loading="lazy"><img class="solo-oscuro" src="temporizador-oscuro.webp" alt="Ventana del temporizador de Pomodoro++ en modo oscuro" width="376" height="308" loading="lazy"></figure>
+        <div><span class="eyebrow">/temporizador</span><h3>Ciclos de enfoque y descanso</h3>
+          <p>Trabaja en bloques de concentración con descansos cortos y largos, y sigue tu avance con los indicadores de ciclo. Inicia, pausa o reinicia con un clic.</p></div>
+      </div>
+
+      <div class="fila-f inv rev">
+        <figure class="shot chico"><img class="solo-claro" src="ajustes-claro.webp" alt="Panel de configuración con presets, personalización, estadísticas y más" width="371" height="397" loading="lazy"><img class="solo-oscuro" src="ajustes-oscuro.webp" alt="Panel de configuración en modo oscuro" width="371" height="395" loading="lazy"></figure>
+        <div><span class="eyebrow">/presets</span><h3>Tempozadores propios</h3>
+          <p>Crea presets con tu tiempo de concentración, tus descansos y el número de ciclos. Marca uno como favorito y será el que se abra al iniciar la app.</p></div>
+      </div>
+
+      <div class="fila-f rev">
+        <div class="shot"><div class="shot-bar">/modo adaptativo</div>
+          <div class="anim" aria-hidden="true"><div class="ad">
+            <div class="ad-fila"><span>enfoque</span><i></i></div>
+            <div class="ad-fila d"><span>descanso</span><i></i></div>
+            <div class="ad-fila"><span>enfoque</span><i></i></div>
+            <div class="ad-tag">adaptativo</div>
+          </div></div></div>
+        <div><span class="eyebrow">/modo adaptativo</span><h3>Se adapta a ti</h3>
+          <p>Con el modo adaptativo, el temporizador ajusta los bloques de tiempo, reduciendo el descanso y aumentando el enfoque cada ciclo.</p></div>
+      </div>
+
+      <div class="fila-f inv rev">
+        <div class="shot"><div class="shot-bar">/personalización</div>
+          <div class="anim pe" aria-hidden="true">
+            <div class="mini"><div class="mini-bar">/pomodoro++</div><div class="mini-body">
+              <p class="mini-fase"><i></i>enfoque</p><p class="mini-reloj">25:00</p>
+              <div class="mini-pts"><i></i><i></i><i></i><i></i></div></div></div>
+            <div class="swatches"><i></i><i></i><i></i><i></i></div>
+          </div></div>
+        <div><span class="eyebrow">/personalización</span><h3>Variantes de colores</h3>
+          <p>Modo claro y oscuro, y colores de acento: naranja, verde, azul cielo y violeta. En modo oscuro cada color usa una versión más suave para cuidar tu vista.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Funciones (2) ===== -->
+  <section class="bloque">
+    <div class="wrap">
+      <h2 class="rev">Para concentrarte mejor</h2>
+
+      <div class="fila-f rev">
+        <div class="shot"><div class="shot-bar">/estadísticas</div>
+          <div class="anim" aria-hidden="true"><div class="es">
+            <div class="es-barras"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="es-dias"><span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+          </div></div></div>
+        <div><span class="eyebrow">/estadísticas</span><h3>Mira tu progreso</h3>
+          <p>Consulta cuánto tiempo has pasado enfocado y entiende cómo evoluciona tu constancia con el paso del tiempo.</p></div>
+      </div>
+
+      <div class="fila-f inv rev">
+        <div class="shot"><div class="shot-bar">/alarma</div>
+          <div class="anim" aria-hidden="true">
+            <div class="campana"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v3.5L4.5 15a1 1 0 0 0 .9 1.5h13.2a1 1 0 0 0 .9-1.5L18 12.5V9a6 6 0 0 0-6-6zm-2 15a2 2 0 0 0 4 0z"/></svg><b></b><b></b></div>
+            <div class="aviso">¡fin del ciclo de trabajo!</div>
+          </div></div>
+        <div><span class="eyebrow">/alarma</span><h3>Mantente </h3>
+          <p>Elige el sonido y el volumen del aviso al terminar cada bloque, y silénciala con un clic cuando no la necesites.</p></div>
+      </div>
+
+      <div class="fila-f rev">
+        <div class="shot"><div class="shot-bar">/ventana flotante</div>
+          <div class="anim" aria-hidden="true"><div class="vf">
+            <div class="vf-bar"></div>
+            <div class="vf-lineas"><i></i><i></i><i></i><i></i><i></i></div>
+            <div class="vf-mini"><small>enfoque</small>24:12</div>
+          </div></div></div>
+        <div><span class="eyebrow">/ventana flotante</span><h3>Siempre a la vista</h3>
+          <p>Abre un mini temporizador flotante que puedes dejar visible mientras trabajas en otras tareas.</p></div>
+      </div>
+
+      <div class="fila-f inv rev">
+        <div class="shot"><div class="shot-bar">/atajos</div>
+          <div class="teclas">
+            <div><kbd>Espacio</kbd> iniciar o pausar</div>
+            <div><kbd>R</kbd> reiniciar este bloque</div>
+            <div><kbd>A</kbd> modo adaptativo</div>
+            <div><kbd>Esc</kbd> cerrar configuración</div>
+          </div></div>
+        <div><span class="eyebrow">/atajos</span><h3>Todo desde el teclado</h3>
+          <p>Controla el temporizador mediante los atajos de teclado disponibles.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Privacidad ===== -->
+  <section class="banda rev">
+    <div class="wrap">
+      <span class="eyebrow"></span>
+      <h2>Tus datos se quedan contigo</h2>
+      <p>Pomodoro++ no recolecta ni envía ninguno de tus datos por medio de algún tipo de conexión. Tus datos se guardan de manera local.</p>
+    </div>
+  </section>
+
+  <!-- ===== Comunidad ===== -->
+  <section class="bloque comunidad" id="comunidad">
+    <div class="wrap rev">
+      <h2>Código abierto y en constante mejora</h2>
+      <p>Pomodoro++ se desarrolla en GitHub. Descarga cualquier versión, revisa el código o cuéntanos qué mejorarías.</p>
+      <div class="acciones">
+        <a class="btn" id="btn-gh" href="#">Ver el código en GitHub</a>
+        <a class="btn sec" id="btn-rel" href="#">Todas las versiones</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="agua">
+  <div class="olas" aria-hidden="true">
+    <svg viewBox="0 0 2400 70" preserveAspectRatio="none"><path d="M0 35 Q300 0 600 35 T1200 35 T1800 35 T2400 35 V70 H0 Z"/></svg>
+    <svg viewBox="0 0 2400 70" preserveAspectRatio="none"><path d="M0 40 Q300 8 600 40 T1200 40 T1800 40 T2400 40 V70 H0 Z"/></svg>
+  </div>
+  <div class="wrap cols">
+    <div><h4>Proyecto</h4><a id="f-gh" href="#">GitHub</a><a id="f-rel" href="#">Versiones</a></div>
+    <div><h4>Soporte</h4><a id="f-issues" href="#">Reportar un problema</a></div>
   </div>
 </footer>
 
 <script>
-  /* ====== CONFIGURA ESTO ====== */
+  /* ====== CONFIGURACIÓN ====== */
   const REPO = "CarlosConLetraC/pomodoro-plus-plus";
-
-  /* Cada plataforma: etiqueta y terminaciones de archivo que se buscarán en la release */
-  const PLATAFORMAS = {
-    windows: { nombre: "Windows",            ext: [".exe", ".msi", ".zip"] },
-    linux:   { nombre: "Linux (portable)",   ext: [".tar.gz", ".appimage"] },
-    debian:  { nombre: "Ubuntu / Debian",    ext: [".deb"] },
-    arch:    { nombre: "Arch / CachyOS",     ext: [".pkg.tar.zst"] },
-    android: { nombre: "Android",            ext: [".apk"] },
-    macos:   { nombre: "macOS",              ext: [".dmg"] }
+  /* Cómo reconocer el archivo de cada sistema por su nombre */
+  const MATCH = {
+    windows: n => /\.(exe|msi)$/i.test(n) || (/win/i.test(n) && /\.(zip|7z)$/i.test(n)),
+    android: n => /\.apk$/i.test(n),
+    linux:   n => /\.(appimage|deb|rpm|tar\.gz|tgz|tar\.xz|pkg\.tar\.zst)$/i.test(n) && !/win/i.test(n)
   };
-  const PROXIMAMENTE = ["iOS"];
-  /* ============================ */
+  /* =========================== */
+  const BASE = `https://github.com/${REPO}`, URL_REL = `${BASE}/releases/latest`;
+  const $ = id => document.getElementById(id);
+  ["btn-gh", "f-gh"].forEach(i => $(i).href = BASE);
+  ["btn-rel", "f-rel"].forEach(i => $(i).href = `${BASE}/releases`);
+  $("f-issues").href = `${BASE}/issues`;
 
-  const URL_RELEASES = `https://github.com/${REPO}/releases/latest`;
-  document.getElementById("repo-link").href = `https://github.com/${REPO}`;
+  /* Tema */
+  $("btn-theme").addEventListener("click", () => {
+    const r = document.documentElement, n = r.dataset.theme === "dark" ? "light" : "dark";
+    r.dataset.theme = n;
+    try { localStorage.setItem("tema", n); } catch (e) {}
+  });
 
+  /* Aparición al hacer scroll */
+  const obs = "IntersectionObserver" in window ? new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("in"); obs.unobserve(e.target); }
+  }), { threshold: .12 }) : null;
+  document.querySelectorAll(".rev").forEach(el => obs ? obs.observe(el) : el.classList.add("in"));
+
+  /* Sistema operativo */
   function detectarOS() {
-    const ua = navigator.userAgent;
-    const plat = navigator.userAgentData?.platform || navigator.platform || "";
+    const ua = navigator.userAgent, plat = navigator.userAgentData?.platform || navigator.platform || "";
     if (/android/i.test(ua)) return "android";
     if (/iPhone|iPad|iPod/i.test(ua) || (/Mac/i.test(plat) && navigator.maxTouchPoints > 1)) return "ios";
     if (/Win/i.test(plat)) return "windows";
     if (/Mac/i.test(plat)) return "macos";
     if (/Linux|X11/i.test(plat + ua)) return "linux";
-    return "desconocido";
+    return "otro";
   }
+  const nombreLinux = n => {
+    n = n.toLowerCase();
+    if (n.endsWith(".deb")) return "Ubuntu / Debian (.deb)";
+    if (n.endsWith(".pkg.tar.zst")) return "Arch / CachyOS (.pkg.tar.zst)";
+    if (n.endsWith(".appimage")) return "AppImage (universal)";
+    if (n.endsWith(".rpm")) return "Fedora (.rpm)";
+    return "Portable (.tar.gz)";
+  };
+  const deshabilitar = (el) => { el.setAttribute("aria-disabled", "true"); el.removeAttribute("href"); el.querySelector("small").textContent = "próximamente"; };
 
-  function buscarAsset(assets, exts) {
-    return assets.find(a => exts.some(e => a.name.toLowerCase().endsWith(e)));
-  }
-
-  function dibujarLista(assets) {
-    const cont = document.getElementById("lista");
-    cont.innerHTML = "";
-    for (const [id, p] of Object.entries(PLATAFORMAS)) {
-      const asset = buscarAsset(assets, p.ext);
-      if (asset) {
-        const a = document.createElement("a");
-        a.href = asset.browser_download_url;
-        a.innerHTML = `${p.nombre}<small>${asset.name}</small>`;
-        cont.appendChild(a);
-      }
+  function pintar(assets, os) {
+    const por = k => assets.filter(a => MATCH[k](a.name));
+    for (const k of ["windows", "android"]) {
+      const a = por(k)[0], el = $("os-" + k);
+      if (a) { el.href = a.browser_download_url; el.removeAttribute("aria-disabled"); el.querySelector("small").textContent = k === "android" ? "archivo .apk" : "descarga directa"; }
+      else deshabilitar(el);
     }
-    PROXIMAMENTE.forEach(n => {
-      const s = document.createElement("span");
-      s.className = "soon";
-      s.innerHTML = `${n}<small>Próximamente</small>`;
-      cont.appendChild(s);
-    });
-    if (!cont.querySelector("a")) {
-      cont.innerHTML = `<a href="${URL_RELEASES}">Ver todas las descargas en GitHub</a>`;
-    }
-  }
-
-  function botonPrincipal(os, assets) {
-    const btn = document.getElementById("btn-principal");
-    let clave = os;
-    if (os === "linux") clave = "linux"; // en Linux no se puede saber la distro: AppImage por defecto
-    const p = PLATAFORMAS[clave];
-    if (p) {
-      const asset = buscarAsset(assets, p.ext);
-      btn.textContent = `Descargar para ${p.nombre.split(" (")[0]}`;
-      btn.href = asset ? asset.browser_download_url : URL_RELEASES;
-    } else if (os === "ios") {
-      btn.textContent = "iOS próximamente";
-      btn.href = "#descargas";
+    const lin = por("linux"), btn = $("os-linux"), panel = $("linux-panel");
+    if (!lin.length) { deshabilitar(btn); }
+    else if (lin.length === 1) {
+      const a = document.createElement("a");
+      a.className = btn.className; a.id = btn.id; a.href = lin[0].browser_download_url;
+      a.innerHTML = btn.innerHTML; btn.replaceWith(a);
     } else {
-      btn.textContent = "Ver descargas";
-      btn.href = "#descargas";
+      panel.innerHTML = lin.map(a => `<a class="fila" href="${a.browser_download_url}"><span>${nombreLinux(a.name)}</span><small>${a.name}</small></a>`).join("");
+      btn.addEventListener("click", () => {
+        const abierto = panel.hidden;
+        panel.hidden = !abierto; btn.setAttribute("aria-expanded", String(abierto));
+      });
     }
+    const mio = $("os-" + os); if (mio) mio.classList.add("tuyo");
   }
 
-  async function iniciar() {
+  function sinApi() {   /* Si falla la API: todo apunta a la última release */
+    $("os-windows").href = URL_REL;
+    $("os-linux").addEventListener("click", () => window.open(URL_REL, "_blank", "noopener"));
+    $("version").textContent = "ver en GitHub";
+  }
+
+  (async function () {
     const os = detectarOS();
-    botonPrincipal(os, []);          // estado inicial mientras carga
+    if (os === "macos" || os === "ios") { const n = $("nota-os"); n.hidden = false; n.textContent = "Pomodoro++ está disponible para Windows y Linux."; }
     try {
       const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
       if (!r.ok) throw new Error(r.status);
-      const data = await r.json();
-      document.getElementById("version").textContent = `Última versión: ${data.tag_name}`;
-      botonPrincipal(os, data.assets);
-      dibujarLista(data.assets);
-    } catch (e) {
-      // Fallback: enlace general a la última release
-      document.getElementById("btn-principal").href = URL_RELEASES;
-      document.getElementById("lista").innerHTML =
-        `<a href="${URL_RELEASES}">Ver todas las descargas en GitHub</a>`;
-    }
-  }
-  iniciar();
+      const d = await r.json();
+      $("version").textContent = d.tag_name;
+      if (d.published_at) $("fecha").textContent = " · " + new Date(d.published_at).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+      pintar(d.assets || [], os);
+    } catch (e) { sinApi(); const m = $("os-" + os); if (m) m.classList.add("tuyo"); }
+  })();
 </script>
 </body>
 </html>
