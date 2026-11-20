@@ -5,13 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Pomodoro++ · temporizador pomodoro con modo adaptativo</title>
 <meta name="description" content="Temporizador Pomodoro con modo adaptativo. Descárgalo para Windows, Linux y Android.">
-<link rel="icon" href="favicon.png" type="image/png">
+<link rel="icon" id="favicon" href="favicon.png" type="image/png">
 <script>
   document.documentElement.classList.add("js");
   try {
     var t = localStorage.getItem("tema");
     if (!t) t = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     document.documentElement.dataset.theme = t;
+    var f = document.getElementById("favicon"); if (f && t === "dark") f.href = "favicon-oscuro.png";
   } catch (e) { document.documentElement.dataset.theme = "light"; }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,7 +24,7 @@
 
   /* Paleta: blanco ~60%, gris ~30%, naranja ~10% */
   :root {
-    --bg: #ffffff; --texto: #1c1c1d; --suave: #5a5b5c;
+    --bg: #ffffff; --texto: #1c1c1d; --suave: #5a5b5c; --on-acento: #1c1c1d;
     --gris: #494a4b; --naranja: #ed9f00; --naranja-fuerte: #c27a00;
     --win: #ffffff; --borde: #d3d8de; --labio: #c0cedc;
     --fila: color-mix(in srgb, #ed9f00 20%, #ffffff);
@@ -31,10 +32,10 @@
     --agua1: #a0d2ff; --agua2: #c7e4ff; --agua-texto: #1f3550;
   }
   :root[data-theme="dark"] {
-    --bg: #1c1c1c; --texto: #f2f2f2; --suave: #b4b5b6; --naranja-fuerte: #f2b23a;
+    --bg: #1c1c1c; --texto: #f2f2f2; --suave: #b4b5b6; --naranja: #8ecfe0; --naranja-fuerte: #8ecfe0; --on-acento: #0b1f35;
     --win: #161617; --borde: #2c2d2f; --labio: #0f1b27;
-    --fila: color-mix(in srgb, #ed9f00 16%, #1d1d1e);
-    --fila-hover: color-mix(in srgb, #ed9f00 28%, #1d1d1e);
+    --fila: #2b4a60;
+    --fila-hover: #35607a;
     --agua1: #356586; --agua2: #0c3256; --agua-texto: #eaf4ff;
   }
 
@@ -61,7 +62,7 @@
   #btn-theme .sol { display: none; }
   :root[data-theme="dark"] #btn-theme .luna { display: none; }
   :root[data-theme="dark"] #btn-theme .sol { display: block; }
-  .btn { display: inline-block; padding: .55rem 1.1rem; border-radius: 8px; font-weight: 700; font-size: .92rem; text-decoration: none; background: var(--naranja); color: #1c1c1d; box-shadow: 0 3px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; }
+  .btn { display: inline-block; padding: .55rem 1.1rem; border-radius: 8px; font-weight: 700; font-size: .92rem; text-decoration: none; background: var(--naranja); color: var(--on-acento); box-shadow: 0 3px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; }
   .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 0 color-mix(in srgb, var(--naranja) 60%, #000); }
   .btn.sec { background: transparent; color: var(--texto); box-shadow: inset 0 0 0 2px var(--gris); }
   :root[data-theme="dark"] .btn.sec { box-shadow: inset 0 0 0 2px var(--suave); }
@@ -73,7 +74,7 @@
   .release { margin: 1.8rem 0 .9rem; font-size: .9rem; color: var(--suave); }
   .release b { color: var(--naranja-fuerte); }
   .os-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-width: 760px; margin: 0 auto; }
-  .os { display: block; text-decoration: none; padding: 1.1rem 1rem; border-radius: 10px; background: var(--naranja); color: #1c1c1d; border: 0; font-family: inherit; cursor: pointer; box-shadow: 0 4px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; position: relative; }
+  .os { display: block; text-decoration: none; padding: 1.1rem 1rem; border-radius: 10px; background: var(--naranja); color: var(--on-acento); border: 0; font-family: inherit; cursor: pointer; box-shadow: 0 4px 0 color-mix(in srgb, var(--naranja) 60%, #000); transition: transform .15s ease, box-shadow .15s ease; position: relative; }
   .os:hover { transform: translateY(-2px); box-shadow: 0 6px 0 color-mix(in srgb, var(--naranja) 60%, #000); }
   .os b { display: block; font-size: 1.25rem; font-weight: 800; }
   .os small { display: block; font-size: .8rem; opacity: .85; }
@@ -183,7 +184,7 @@
   .teclas div:nth-child(3), .teclas div:nth-child(3) kbd { animation-delay: 4s; }
   .teclas div:nth-child(4), .teclas div:nth-child(4) kbd { animation-delay: 6s; }
   @keyframes tecla { 0%, 22% { background: var(--fila-hover); } 26%, 100% { background: var(--fila); } }
-  @keyframes pulsa { 0%, 22% { transform: translateY(2px); box-shadow: 0 0 0 var(--labio); background: var(--naranja); color: #1c1c1d; } 26%, 100% { transform: none; box-shadow: 0 2px 0 var(--labio); background: var(--win); color: inherit; } }
+  @keyframes pulsa { 0%, 22% { transform: translateY(2px); box-shadow: 0 0 0 var(--labio); background: var(--naranja); color: var(--on-acento); } 26%, 100% { transform: none; box-shadow: 0 2px 0 var(--labio); background: var(--win); color: inherit; } }
 
   /* Banda gris (privacidad) */
   .banda { background: var(--gris); color: #fff; text-align: center; padding: 3.5rem 0; margin-top: 2rem; }
@@ -237,7 +238,7 @@
 
 <header class="top">
   <div class="wrap">
-    <a class="marca" href="#inicio"><img src="logo.png" alt="" width="32" height="32"><span>pomodoro<sup>++</sup></span></a>
+    <a class="marca" href="#inicio"><img class="solo-claro" src="logo.png" alt="" width="32" height="32"><img class="solo-oscuro" src="logo-oscuro.png" alt="" width="32" height="32"><span>pomodoro<sup>++</sup></span></a>
     <nav>
       <a class="nav-x" href="#inicio">Inicio</a>
       <a href="#descargar">Descargar</a>
@@ -261,7 +262,7 @@
 
       <p class="release" id="descargar">Última versión: <b id="version">…</b><span id="fecha"></span></p>
       <div class="os-grid" id="os-grid">
-        <a class="os" id="os-windows" href="#"><b>Windows</b><small>descarga directa</small></a>
+        <a class="os" id="os-windows" href="#"><b>Windows</b><small>Descarga directa</small></a>
         <button class="os" id="os-linux" type="button" aria-expanded="false" aria-controls="linux-panel"><b>Linux</b><small>Ubuntu, Debian, Arch y más</small></button>
         <a class="os" id="os-android" aria-disabled="true"><b>Android</b><small>próximamente</small></a>
       </div>
@@ -288,7 +289,7 @@
 
       <div class="fila-f inv rev">
         <figure class="shot chico"><img class="solo-claro" src="ajustes-claro.webp" alt="Panel de configuración con presets, personalización, estadísticas y más" width="371" height="397" loading="lazy"><img class="solo-oscuro" src="ajustes-oscuro.webp" alt="Panel de configuración en modo oscuro" width="371" height="395" loading="lazy"></figure>
-        <div><span class="eyebrow">/presets</span><h3>Tempozadores propios</h3>
+        <div><span class="eyebrow">/presets</span><h3>Temporizadores propios</h3>
           <p>Crea presets con tu tiempo de concentración, tus descansos y el número de ciclos. Marca uno como favorito y será el que se abra al iniciar la app.</p></div>
       </div>
 
@@ -373,7 +374,7 @@
     <div class="wrap">
       <span class="eyebrow"></span>
       <h2>Tus datos se quedan contigo</h2>
-      <p>Pomodoro++ no recolecta ni envía ninguno de tus datos por medio de algún tipo de conexión. Tus datos se guardan de manera local.</p>
+      <p>Pomodoro++ no recolecta ni envía ninguno de tus datos por medio de internet. Tus datos se guardan en tu dispositivo.</p>
     </div>
   </section>
 
@@ -381,9 +382,9 @@
   <section class="bloque comunidad" id="comunidad">
     <div class="wrap rev">
       <h2>Código abierto y en constante mejora</h2>
-      <p>Pomodoro++ se desarrolla en GitHub. Descarga cualquier versión, revisa el código o cuéntanos qué mejorarías.</p>
+      <p>Pomodoro++ se desarrolla en Codeberg. Descarga cualquier versión, revisa el código o cuéntanos qué mejorarías.</p>
       <div class="acciones">
-        <a class="btn" id="btn-gh" href="#">Ver el código en GitHub</a>
+        <a class="btn" id="btn-gh" href="#">Ver el código en Codeberg</a>
         <a class="btn sec" id="btn-rel" href="#">Todas las versiones</a>
       </div>
     </div>
@@ -396,7 +397,7 @@
     <svg viewBox="0 0 2400 70" preserveAspectRatio="none"><path d="M0 40 Q300 8 600 40 T1200 40 T1800 40 T2400 40 V70 H0 Z"/></svg>
   </div>
   <div class="wrap cols">
-    <div><h4>Proyecto</h4><a id="f-gh" href="#">GitHub</a><a id="f-rel" href="#">Versiones</a></div>
+    <div><h4>Proyecto</h4><a id="f-gh" href="#">Codeberg</a><a id="f-rel" href="#">Versiones</a></div>
     <div><h4>Soporte</h4><a id="f-issues" href="#">Reportar un problema</a></div>
   </div>
 </footer>
@@ -411,7 +412,7 @@
     linux:   n => /\.(appimage|deb|rpm|tar\.gz|tgz|tar\.xz|pkg\.tar\.zst)$/i.test(n) && !/win/i.test(n)
   };
   /* =========================== */
-  const BASE = `https://github.com/${REPO}`, URL_REL = `${BASE}/releases/latest`;
+  const BASE = `https://codeberg.org/${REPO}`, URL_REL = `${BASE}/releases`;
   const $ = id => document.getElementById(id);
   ["btn-gh", "f-gh"].forEach(i => $(i).href = BASE);
   ["btn-rel", "f-rel"].forEach(i => $(i).href = `${BASE}/releases`);
@@ -421,6 +422,7 @@
   $("btn-theme").addEventListener("click", () => {
     const r = document.documentElement, n = r.dataset.theme === "dark" ? "light" : "dark";
     r.dataset.theme = n;
+    $("favicon").href = n === "dark" ? "favicon-oscuro.png" : "favicon.png";
     try { localStorage.setItem("tema", n); } catch (e) {}
   });
 
@@ -476,14 +478,14 @@
   function sinApi() {   /* Si falla la API: todo apunta a la última release */
     $("os-windows").href = URL_REL;
     $("os-linux").addEventListener("click", () => window.open(URL_REL, "_blank", "noopener"));
-    $("version").textContent = "ver en GitHub";
+    $("version").textContent = "ver en Codeberg";
   }
 
   (async function () {
     const os = detectarOS();
     if (os === "macos" || os === "ios") { const n = $("nota-os"); n.hidden = false; n.textContent = "Pomodoro++ está disponible para Windows y Linux."; }
     try {
-      const r = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+      const r = await fetch(`https://codeberg.org/api/v1/repos/${REPO}/releases/latest`);
       if (!r.ok) throw new Error(r.status);
       const d = await r.json();
       $("version").textContent = d.tag_name;
